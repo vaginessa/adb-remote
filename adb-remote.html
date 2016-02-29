@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ADB remote</title>
+
+<style type="text/css">
+    html, body{
+        height: 100%;
+        width: 100%;
+        margin: 0px;
+        margin-left: 1px;
+    }
+
+    #output{
+        width:100%;
+        background: darkgray;
+        height: 90%;
+        resize: none;
+        font-family: "Courier New", Courier, monospace;
+        font-size: 18px;
+    }
+
+
+    input[type="text"] {
+        display: block;
+        width: 100%;
+        font-family: sans-serif;
+        font-size: 18px;
+        appearance: none;
+        box-shadow: none;
+        border-radius: none;
+    }
+    input[type="text"]:focus {
+        outline: none;
+    }
+
+</style>
+</head>
+<body>
+
+<textarea id="output" readonly></textarea>
+<input type="text" value="" id="adbshell">
+
+<script type="text/javascript">
+
+    var host = window.location.host;
+    var client = new WebSocket(['ws://', host].join(''));
+    var output = document.getElementById('output');
+    var input = document.getElementById('adbshell');
+    var devices = null;
+
+    input.addEventListener('keyup', function(event){
+       if (event.keyCode === 13){
+           sendCommand(devices[0].id, input.value);
+           output.textContent += '\n' + input.value;
+           input.value = '';
+       }
+    });
+
+    client.addEventListener('open', function(event){
+        console.log(event);
+    });
+
+    client.addEventListener('message', function(event){
+        console.log(event.data);
+        try{
+            devices = JSON.parse(event.data);
+        } catch (e) {
+            data = event.data;
+        }
+        output.textContent += '\n' + event.data;
+    });
+
+    var sendCommand = function(id, cmd){
+        client.send(['', id, cmd].join(':'));
+    };
+
+    function checkEnter(event){
+        console.log(event.keyCode);
+    }
+
+    setTimeout(function(){
+        client.send('listdevices::');
+    }, 500);
+
+</script>
+
+
+
+</body>
+</html>
